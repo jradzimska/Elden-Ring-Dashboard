@@ -130,7 +130,7 @@ cat_palette <- c(
 
 
 function(input, output, session) {
-
+  
   observe({
     updateCheckboxGroupInput(session, "cat_filter",
                              choices  = all_categories,
@@ -150,7 +150,7 @@ function(input, output, session) {
       ) %>%
       calc_ar(input$str, input$dex, input$int, input$fai, input$arc)
   })
-
+  
   output$weapon_table <- renderDT({
     df <- computed() %>%
       arrange(desc(Total_AR)) %>%
@@ -181,7 +181,7 @@ function(input, output, session) {
       )
   })
   
-
+  
   output$weapon_detail <- renderUI({
     sel <- input$weapon_table_rows_selected
     if (is.null(sel) || length(sel) == 0) {
@@ -189,12 +189,12 @@ function(input, output, session) {
                     "← Click a weapon row to inspect"))
     }
     
-
+    
     df_sorted <- computed() %>% arrange(desc(Total_AR))
     if (sel > nrow(df_sorted)) return(NULL)
     w <- df_sorted[sel, , drop = FALSE]
     
-
+    
     sv_Str <- as.numeric(w$scale_Str[[1]])
     sv_Dex <- as.numeric(w$scale_Dex[[1]])
     sv_Int <- as.numeric(w$scale_Int[[1]])
@@ -210,7 +210,7 @@ function(input, output, session) {
       if (isTRUE(scale_breaks[idx] == 0)) "-" else scale_labels[idx]
     }
     
-
+    
     bar_pct <- function(v) {
       v <- as.numeric(v)
       if (is.na(v) || length(v) == 0 || v == 0) return("0%")
@@ -238,7 +238,7 @@ function(input, output, session) {
     w_desc    <- as.character(w$description[[1]])
     
     tags$div(class = "weapon-detail-inner",
-       
+             
              tags$div(class = "weapon-detail-left",
                       if (!is.na(w_image) && nchar(w_image) > 4) {
                         tags$img(src = w_image, class = "weapon-img-frame",
@@ -474,7 +474,7 @@ function(input, output, session) {
   
   shields_raw <- local({
     s <- read.csv("shields.csv", stringsAsFactors = FALSE)
-    # Parse defence JSON (same helper as weapons)
+    
     def_cols <- parse_defence_json(s$defence)
     req_cols  <- parse_elden_json(s$requiredAttributes, "req_", "amount")
     s <- bind_cols(s, def_cols, req_cols)
@@ -591,46 +591,35 @@ function(input, output, session) {
     n_total <- nrow(talismans_data)
     pct <- if (n_total > 0) round(100 * n_owned / n_total) else 0
     
-    # Colour: 0-33% dim red, 34-66% gold, 67-99% bright gold, 100% green
+    
     arc_color <- if (pct == 100) "#4CAF82"
     else if (pct >= 67) "#C9A84C"
     else if (pct >= 34) "#A07828"
     else "#7A3A1A"
     
-    # SVG half-circle gauge (semicircle, 200x110 viewbox)
-    # Track arc: from 180 deg to 0 deg (left to right along top)
-    # r=80, cx=100, cy=100
-    r <- 80; cx <- 100; cy <- 100
-    # Full track: from (-r,0) to (r,0) going up  => start=180, end=0
-    track_d  <- sprintf("M %d %d A %d %d 0 0 1 %d %d",
-                        cx - r, cy, r, r, cx + r, cy)
-    # Filled arc: angle goes from 180 to 180 - pct*180/100
-    angle_rad <- (180 - pct * 180 / 100) * pi / 180
-    ax <- round(cx + r * cos(angle_rad), 2)
-    ay <- round(cy - r * sin(angle_rad), 2)
-    large_arc <- if (pct > 50) 1 else 0
-    fill_d <- if (pct == 0) "" else if (pct == 100) track_d else
-      sprintf("M %d %d A %d %d 0 %d 1 %.2f %.2f",
-              cx - r, cy, r, r, large_arc, ax, ay)
+    
+    r <- 80
+    half_circ <- round(pi * r, 2)   # ~251.33
+    dash_fill  <- round(half_circ * pct / 100, 2)
+    dash_gap   <- half_circ - dash_fill
+    # Path draws the semicircle LEFT -> TOP -> RIGHT (sweep-flag=1 = clockwise)
+    semi_d <- sprintf("M 20 100 A %d %d 0 0 1 180 100", r, r)
     
     HTML(sprintf('
 <div style="display:flex; flex-direction:column; align-items:center; padding:6px 0 2px 0;">
   <svg viewBox="0 0 200 108" width="200" height="108" xmlns="http://www.w3.org/2000/svg">
     <!-- track -->
     <path d="%s" fill="none" stroke="#2A2218" stroke-width="16" stroke-linecap="round"/>
-    <!-- fill -->
-    %s
-    <!-- center text -->
+    <!-- fill: dasharray = filled_length gap_length, offset=0 so it starts at left -->
+    <path d="%s" fill="none" stroke="%s" stroke-width="16" stroke-linecap="round"
+          stroke-dasharray="%.2f %.2f" stroke-dashoffset="0"/>
+    <!-- percentage text -->
     <text x="100" y="96" text-anchor="middle" font-family="Cinzel,serif" font-size="26" font-weight="700" fill="%s">%d%%</text>
-
   </svg>
   <div style="font-family:Cinzel,serif; font-size:11px; letter-spacing:1.5px; color:#8A7B60; margin-top:-4px;">%d of %d TALISMANS</div>
 </div>',
-                 track_d,
-                 if (nchar(fill_d) > 0)
-                   sprintf('<path d="%s" fill="none" stroke="%s" stroke-width="16" stroke-linecap="round"/>',
-                           fill_d, arc_color)
-                 else "",
+                 semi_d,
+                 semi_d, arc_color, dash_fill, dash_gap,
                  arc_color, pct,
                  n_owned, n_total
     ))
@@ -670,7 +659,7 @@ function(input, output, session) {
       sel_input_id  <- paste0("talisman_slot_", i)
       sel_val       <- input[[sel_input_id]]
       
-      # Build choices excluding talismans selected in OTHER slots
+     
       other_slots <- setdiff(seq_len(n_slots), i)
       used_ids <- sapply(other_slots, function(j) {
         v <- input[[paste0("talisman_slot_", j)]]
@@ -710,7 +699,7 @@ function(input, output, session) {
       )
     })
   })
-
+  
   output$category_bar <- renderPlotly({
     metric <- input$cat_metric
     
