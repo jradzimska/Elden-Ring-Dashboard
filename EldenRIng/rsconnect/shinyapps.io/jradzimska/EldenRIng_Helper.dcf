@@ -1,0 +1,12 @@
+name: EldenRIng_Helper
+title: EldenRIng_Helper
+username: jradzimska
+account: jradzimska
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17505424
+bundleId: 12123345
+url: https://jradzimska.shinyapps.io/EldenRIng_Helper/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
