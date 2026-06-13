@@ -179,6 +179,11 @@ table.dataTable thead th {
   border-bottom: 1px solid var(--gold-dk) !important;
 }
 table.dataTable tbody tr:hover td { background: #1a1408 !important; }
+table.dataTable tbody tr:not(.selected):hover td {
+  background-color: #2a1e08 !important;
+  color: var(--gold-lt) !important;
+  cursor: pointer !important;
+}
 table.dataTable tbody tr.selected td,
 table.dataTable tbody tr.selected td.sorting_1,
 table.dataTable tbody tr.selected td.sorting_2,
@@ -273,7 +278,7 @@ table.dataTable tbody tr.selected > td.sorting_3 {
   padding: 12px 16px;
   border-radius: 0 3px 3px 0;
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1.6;
   margin-bottom: 12px;
 }
@@ -303,7 +308,7 @@ table.dataTable tbody tr.selected > td.sorting_3 {
 .about-section-full ul {
   padding-left: 18px;
   color: var(--text-dim);
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.8;
   margin: 0;
 }
@@ -311,7 +316,7 @@ table.dataTable tbody tr.selected > td.sorting_3 {
 .about-placeholder {
   color: var(--text-dim);
   font-style: italic;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.7;
   margin-bottom: 16px;
   padding: 10px 14px;
@@ -405,7 +410,7 @@ fluidPage(
                        el.parentElement.classList.contains('active');
         el.style.cssText = isActive ? ACTIVE_STYLE : INACTIVE_STYLE;
 
-        // remove old listeners before re-adding (clone trick)
+        
         var fresh = el.cloneNode(true);
         el.parentNode.replaceChild(fresh, el);
         fresh.addEventListener('mouseenter', function() {
@@ -460,7 +465,7 @@ fluidPage(
         }
       });
 
-      // Golden row selection — MutationObserver watches for DT adding/removing 'selected'
+      
       function watchTable(tbl) {
         var obs = new MutationObserver(function(mutations) {
           mutations.forEach(function(m) {
@@ -485,7 +490,7 @@ fluidPage(
         Array.prototype.forEach.call(tbl.querySelectorAll('tbody tr'), function(row) {
           obs.observe(row, { attributes: true, attributeFilter: ['class'] });
         });
-        // re-watch after each DT draw (pagination etc adds new rows)
+        
         $(tbl).on('draw.dt', function() {
           Array.prototype.forEach.call(tbl.querySelectorAll('tbody tr'), function(row) {
             obs.observe(row, { attributes: true, attributeFilter: ['class'] });
@@ -910,6 +915,6 @@ fluidPage(
                                 )
                        )
                        
-           ) # end tabsetPanel
-  ) # end padding div
-) # end fluidPage
+           ) 
+  ) 
+) 
